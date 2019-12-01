@@ -1,0 +1,77 @@
+Ref: http://www.androiddocs.com/guide/components/services.html#CreatingBoundService
+
+Declare the services in manifest,
+if restriction is required, set exported to 'false'
+& services should be called by explicit intent , so do not declare intent filters
+
+Two types of creating services  :
+- IntentService
+- extend Service class
+
+
+IntentService , has default worker thread that executes all intents,
+a seperate work queue, default implementation of onBind(), onStartCommand()
+never have to worry about multiple thread handling
+
+
+override
+protected void onHandleIntent(Intent intent){
+
+}
+
+
+extend Service class implementation:
+
+create HandlerThread in onCreate(),
+HandlerThread thread = new HandlerThread("Service",Process.THREAD_PRIORITY_BACKGROUND)
+thread.start();
+
+get the looper from the HandlerThread
+thread.getLooper()
+
+attach the looper to the Handler
+mServiceHandler = new ServiceHandler(mServiceLooper)
+
+in method - onStartCommand(,,startId),
+  create/obtain a Message from handler
+  Message msg = mServiceHandler.obtainMessage()
+  msg.arg1 = startId
+  mServiceHandler.sendMessage(msg);
+
+
+return START_STICKY , START_NOT_STICKY, START_REDELIVER_INTENT
+
+
+If system kills the service after onStartCommand()
+
+START_STICKY -> recreate the service, and call onStartCommand(), but do not deliver the last intent ,
+                send null intent
+
+START_NOT_STICKY -> do not recreate the service, unless there are pending intents to deliver
+
+START_REDELIVER_INTENT -> recreate the service, with last intent that was delivered to the service
+
+
+-> How to start a service
+Intent intent = new Intent(this,HelloService.class)
+startService(intent)
+
+-> How to stop the service
+stopself(int) / stopService()
+
+
+-> Running a service in the Foreground
+startForeground(ONGOING_NOTIFICATION_ID, notification)
+
+
+lifecycle:
+
+startService():
+onCreate() => onStartCommand() => service running => onDestroy()
+
+bindService():
+onCreate() => onBind() => client is bound to the service => onUnbind() => onDestroy()
+
+Bound service: ( is the server in a client-server interface )
+typically onUnbind(Intent i) returns boolean, false
+otherwise the next client binds to the bound service, onRebind() called instead of onBind()
