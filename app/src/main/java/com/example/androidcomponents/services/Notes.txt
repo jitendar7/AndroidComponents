@@ -75,3 +75,26 @@ onCreate() => onBind() => client is bound to the service => onUnbind() => onDest
 Bound service: ( is the server in a client-server interface )
 typically onUnbind(Intent i) returns boolean, false
 otherwise the next client binds to the bound service, onRebind() called instead of onBind()
+
+Bound Service:
+Multiple clients can connect to the service at once. However the system calls your service's
+onBind() method to retrieve the IBinder only when the first client binds. The system delivers the same
+IBinder to any additional clients that bind, without calling onBind() again.
+
+When the last client unBinds from the service, the system destroys the service
+
+IBinder -> provides the programming interface that clients can use to interact
+with the service
+
+3 ways you can define the interface:
+
+1. Extending the Binder class (service running in same process as client)
+2. Using Messenger, work across difference processes, service defines Handler that responds to
+different types of Message objects. ( Message objects is the key for communication )
+Messenger queues all requests into a single thread.
+3.AIDL (Android Interface Definition Language), performs all the work to decompose objects into
+primitives, & marshall them across processes to perform IPC
+If you want the service to handle multiple requests simultaneously, then you can use AIDL
+
+
+Extending the Binder class:
