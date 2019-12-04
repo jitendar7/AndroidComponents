@@ -174,3 +174,67 @@ If you want the service to handle multiple requests simultaneously, then you can
 
 
 Extending the Binder class:
+
+Ref: https://android.googlesource.com/platform/development/+/master/samples/ApiDemos
+Ref: https://developer.android.com/guide/components/bound-services
+
+ - create instance of Binder, that does the following
+    contains public methods that the client can call (or)
+    returns the current service instance, which has public methods the client can call (or)
+    returns an instance of another class hosted by the service with public methods the client can call.
+
+ - return this in onBind()
+ - in the client, receive Binder from the onServiceConnected() callback method
+
+
+eg:
+    class LocalService: Service() {
+
+        // Binder given to clients
+        private val binder = LocalBinder()
+
+        // Random number generator
+        private val mGenerator = Random()
+
+        val randomNumber: Int
+            get() = mGenerator.nextInt(100)
+
+        inner class LocalBinder: Binder() {
+            fun getService(): LocalService = this@LocalService
+        }
+
+        override fun onBind(intent: Intent): IBinder {
+            return binder
+        }
+    }
+
+
+class BindingActivity :Activity() {
+    private lateinit var mService: LocalService
+    private var mBound: Boolean = false
+
+    private val connection = object: ServiceConnection{
+        override fun onServiceConnected(){
+            val binder = service as LocalService.LocalBinder
+            mService = binder.getService()
+            mBound = true
+        }
+
+        override fun onServiceDisconnected(arg0: ComponentName){
+            mBound = false
+        }
+    }
+
+    override fun onStart(){
+        super.onStart()
+        Intent(this, LocalService::class.java).also{intent ->
+            bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        }
+    }
+
+    override fun onStop(){
+        super.onStop()
+        unbindService(connection)
+    }
+
+}
