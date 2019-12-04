@@ -9,15 +9,83 @@ Two types of creating services  :
 - extend Service class
 
 
+//creating a a background service:
+//Ref: https://developer.android.com/training/run-background-service/create-service
+
 IntentService , has default worker thread that executes all intents,
+It provides a straightforward structure for running an operation on a single background thread
+
 a seperate work queue, default implementation of onBind(), onStartCommand()
 never have to worry about multiple thread handling
 
+class PullService: IntentService(PullService::class.simpleName){
+override fun onHandleIntent(workIntent: Intent) {
 
-override
-protected void onHandleIntent(Intent intent){
-
+    }
 }
+
+this also needs an entry in your application manifest
+
+
+//sending work requests to the background service:
+// Ref: https://developer.android.com/training/run-background-service/send-request
+// Ref: https://developer.android.com/reference/androidx/core/app/JobIntentService
+
+JobIntentService, create an intent and enqueue it to be executed by calling enqueueWork()
+
+serviceIntent = Intent().apply{
+    putExtra("download_url", dataUrl)
+}
+
+private const val RSS_JOB_ID = 1000
+RSSPullService.enqueueWork(context,RSSPullService::class.java, RSS_JOB_ID, serviceIntent)
+
+
+To report back the results, we can use the BroadcastReceiver (LocalBroadcastManager)
+
+//Ref: https://developer.android.com/training/run-background-service/report-status
+//Ref: https://stackoverflow.com/questions/53252792/what-are-differences-between-jobintentservice-and-intentservice
+
+
+Report status from a JobIntentService,
+
+val localIntent = Intent(BROADCAST_ACTION).apply {
+    // put an extra
+}
+LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent)
+
+
+Receive status broadcasts from a JobIntentService,
+
+private class DownloadStateReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent){
+    ..
+    }
+}
+
+In an activity
+// The filter's action is BROADCAST_ACTION
+        var statusIntentFilter = IntentFilter(BROADCAST_ACTION).apply {
+            // Adds a data filter for the HTTP scheme
+            addDataScheme("http")
+        }
+
+// Instantiates a new DownloadStateReceiver
+        val downloadStateReceiver = DownloadStateReceiver()
+        // Registers the DownloadStateReceiver and its intent filters
+        LocalBroadcastManager.getInstance(this)
+                .registerReceiver(downloadStateReceiver, statusIntentFilter)
+
+A single BroadcastReceiver, can handle more than one type of broadcast Intent object,
+each with its own action
+
+/** Instantiates a new action filter.  No data filter is needed. */
+        statusIntentFilter = IntentFilter(ACTION_ZOOM_IMAGE)
+        // Registers the receiver with the new filter
+        LocalBroadcastManager.getInstance(this)
+                .registerReceiver(downloadStateReceiver, statusIntentFilter)
+
+sending a broadcast intent doesn't start or resume an Activity. never start an activity in response to an incoming broadcast Intent
 
 
 extend Service class implementation:
@@ -62,6 +130,14 @@ stopself(int) / stopService()
 
 -> Running a service in the Foreground
 startForeground(ONGOING_NOTIFICATION_ID, notification)
+
+
+Foreground services must show a status bar notification with a priority of PRIORITY_LOW or higher,
+if the action is of low enough importance that you can use a minimum priority notification, instead of service, use
+scheduled job.
+
+Apps targeting Android 9 or higher and use foreground services, must request the permission
+FOREGROUND_SERVICE (normal permission)
 
 
 lifecycle:
