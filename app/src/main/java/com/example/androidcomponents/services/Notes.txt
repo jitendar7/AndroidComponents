@@ -238,3 +238,86 @@ class BindingActivity :Activity() {
     }
 
 }
+
+Using a Messenger:
+
+To communicate with remote processes
+Messenger queues all calls to the service
+
+If the service needs to be multithreaded, then use AIDL
+
+steps:
+1. service implements a handler that receives a callback for each call from a client
+2. service uses handler to create a Messenger object
+3. Messenger creates an IBinder that the service returns to clients from onBind()
+4. Clients use the IBinder to instantiate the Messenger which the client uses to send Message objects to
+   the service
+5. service receives each Message in its Handler - specifically in the handleMessage() method
+
+
+private const val MSG_SAY_HELLO =  1
+
+class MessengerService: Service() {
+
+    private lateinit var mMessenger: Messenger
+
+    internal class IncomingHandler(
+            context: Context,
+            private val applicationContext: Context = context.applicationContext ) : Handler() {
+
+        override fun handleMessage(msg: Message) {
+            when(msg.what) {
+                MSG_SAY_HELLO ->
+                    Toast.makeText...
+                else -> super.handleMessage(msg)
+            }
+        }
+     }
+
+    override fun onBind(intent: Intent): IBinder? {
+        mMessenger = Messenger(IncomingHandler(this))
+        return mMessenger.binder
+    }
+
+}
+
+@client side (in activity/fragment):
+
+    private var mService: Messenger? = null
+
+    private val connection = object: ServiceConnection {
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            mService = Messenger(service)
+        }
+
+        override fun onServiceDisconnected(className: ComponentName) {
+            mService = null
+            bound = false
+        }
+    }
+
+    override fun onStart(){
+        super.onStart()
+        //Bind to service
+        Intent(this, MessengerService::class.java).also{
+            intent -> bindService(intent, mConnection, Context.BIND_AUTO_CREATE)
+        }
+    }
+
+
+    override fun onStop(){
+        super.onStop()
+        //unbind the service
+        if(bound) {
+            unbindService(mConnection)
+            bound = false
+        }
+    }
+
+Two way of communication using message from service
+Ref: https://android.googlesource.com/platform/development/+/master/samples/ApiDemos/src/com/example/android/apis/app/MessengerService.java
+Ref: https://android.googlesource.com/platform/development/+/master/samples/ApiDemos/src/com/example/android/apis/app/MessengerServiceActivities.java
+
+
+Binding to a service
+
