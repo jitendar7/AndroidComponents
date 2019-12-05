@@ -321,3 +321,28 @@ Ref: https://android.googlesource.com/platform/development/+/master/samples/ApiD
 
 Binding to a service
 
+binding is asynchronous, bindService() returns immediately
+you can't bind to a service from a broadcast receiver
+
+bindService(intent, connection, Context.BIND_AUTO_CREATE)
+
+BIND_AUTO_CREATE -> create the service if it's not already alive
+BIND_DEBUG_UNBIND
+BIND_NOT_FOREGROUND
+
+Always trap DeadObjectException exception, when the connection has broken
+If you want to receive response even while it is stopped in the background, then you can bind during onCreate()
+and unbind during onDestroy()
+
+Ref: https://android.googlesource.com/platform/development/+/master/samples/ApiDemos/src/com/example/android/apis/app/RemoteService.java
+
+If the service is started and accepts binding, then when the system calls your onUnbind() method, you can optionally
+return true, if you would like to receive a call to onRebind() the next time a client binds to the service,
+though onRebind() returns void, but the client receives IBinder in its onServiceConnected() callback
+
+
+
+Android Interface Definition Language (AIDL):
+
+
+
