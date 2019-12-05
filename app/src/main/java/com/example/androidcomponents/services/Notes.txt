@@ -341,8 +341,15 @@ return true, if you would like to receive a call to onRebind() the next time a c
 though onRebind() returns void, but the client receives IBinder in its onServiceConnected() callback
 
 
+Restrictions on background work
+Ref: https://developer.android.com/guide/background/
+If the app is performing long-running HTTP downloads, consider using DownloadManager
+
+
+How to run the tasks on background threads and off the main UI thread while the app is actively being used:
+
+
 
 Android Interface Definition Language (AIDL):
-
 
 
